@@ -1377,28 +1377,6 @@ if [[ "$HAVE_XDEBUG" == "yes" ]]; then
 	write_out INFO "Xdebug is included, but disabled by default. To enable it, change 'xdebug.mode' in your php.ini file."
 fi
 
-function separate_symbols {
-	local libname="$1"
-	local output_dirname
-
-	output_dirname="$SYMBOLS_DIR/$(dirname $libname)"
-	mkdir -p "$output_dirname" >> "$DIR/install.log" 2>&1
-	cp "$libname" "$SYMBOLS_DIR/$libname.debug" >> "$DIR/install.log" 2>&1
-	"$STRIP" -S "$libname" >> "$DIR/install.log" 2>&1 || rm "$SYMBOLS_DIR/$libname.debug" #if this fails, this probably isn't an executable binary
-}
-
-if [ "$SEPARATE_SYMBOLS" != "no" ]; then
-	echo -n "[INFO] Separating debugging symbols into $SYMBOLS_DIR..."
-	cd "$INSTALL_DIR"
-	find "lib" \( -name '*.so' -o -name '*.so.*' -o -name '*.dylib' -o -name '*.dylib.*' \) -print0 | while IFS= read -r -d '' file; do
-		separate_symbols "$file"
-	done
-	for file in "bin/"*; do
-		separate_symbols "$file"
-	done
-	cd "$DIR"
-	write_done
-fi
 
 cd "$DIR"
 if [ "$DO_CLEANUP" == "yes" ]; then
@@ -1415,6 +1393,22 @@ if [ "$DO_CLEANUP" == "yes" ]; then
 	rm -r -f "$INSTALL_DIR/lib/"*.a >> "$DIR/install.log" 2>&1
 	rm -r -f "$INSTALL_DIR/lib/"*.la >> "$DIR/install.log" 2>&1
 	rm -r -f "$INSTALL_DIR/include" >> "$DIR/install.log" 2>&1
+fi
+
+if [ "$SEPARATE_SYMBOLS" != "no" ]; then
+	echo -n "[INFO] Separating debugging symbols into $SYMBOLS_DIR..."
+	rm -rf "$SYMBOLS_DIR" || true 2>&1
+	mkdir -p "$SYMBOLS_DIR" || true 2>&1
+	cp -r "$INSTALL_DIR"/* "$SYMBOLS_DIR"
+	cd "$INSTALL_DIR"
+	find "lib" \( -name '*.so' -o -name '*.so.*' -o -name '*.dylib' -o -name '*.dylib.*' \) -print0 | while IFS= read -r -d '' file; do
+		"$STRIP" -S "$file" >> "$DIR/install.log" 2>&1 || true #if this fails, this probably isn't an executable binary
+	done
+	for file in "bin/"*; do
+		"$STRIP" -S "$file" >> "$DIR/install.log" 2>&1 || true #if this fails, this probably isn't an executable binary
+	done
+	cd "$DIR"
+	write_done
 fi
 
 date >> "$DIR/install.log" 2>&1
