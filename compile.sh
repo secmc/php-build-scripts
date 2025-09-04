@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-PHP_VERSIONS=("8.2.28" "8.3.21")
+PHP_VERSIONS=("8.2.29" "8.3.25" "8.4.12")
 
 #### NOTE: Tags with "v" prefixes behave weirdly in the GitHub API. They'll be stripped in some places but not others.
 #### Use commit hashes to avoid this.
@@ -23,19 +23,19 @@ LIBZIP_VERSION="1.11.3"
 SQLITE3_VERSION="3500000" #3.50.0
 LIBDEFLATE_VERSION="96836d7d9d10e3e0d53e6edb54eb908514e336c4" #1.24 - see above note about "v" prefixes
 
-EXT_PMMPTHREAD_VERSION="6.1.1"
-EXT_YAML_VERSION="2.2.4"
-EXT_LEVELDB_VERSION="317fdcd8415e1566fc2835ce2bdb8e19b890f9f3" #release not tagged
+EXT_PMMPTHREAD_VERSION="798c6b23f605f9f3f19b553a15e35290982fa449"
+EXT_YAML_VERSION="2.2.5"
+EXT_LEVELDB_VERSION="88071eb1b1eae96af043229104b9d813f7cbe40c" #release not tagged
 EXT_CHUNKUTILS2_VERSION="0.3.5"
-EXT_XDEBUG_VERSION="3.4.3"
+EXT_XDEBUG_VERSION="3.4.5"
 EXT_IGBINARY_VERSION="3.2.16"
-EXT_CRYPTO_VERSION="abbe7cbf869f96e69f2ce897271a61d32f43c7c0" #release not tagged
+EXT_CRYPTO_VERSION="999b3c7edbc7f8ca4fdeb0bb4bbae488ad0daf07" #release not tagged
 EXT_RECURSIONGUARD_VERSION="0.1.0"
 EXT_LIBDEFLATE_VERSION="0.2.1"
 EXT_MORTON_VERSION="0.1.2"
 EXT_XXHASH_VERSION="0.2.0"
 EXT_ARRAYDEBUG_VERSION="0.2.0"
-EXT_ENCODING_VERSION="0.4.0"
+EXT_ENCODING_VERSION="0.4.1"
 
 function write_out {
 	echo "[$1] $2"
