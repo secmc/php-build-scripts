@@ -231,7 +231,7 @@ while getopts "::t:j:sdDxfgnva:P:c:l:Jiz:" OPTION; do
 			PM_VERSION_MAJOR="$OPTARG"
 			;;
 		J)
-			write_out "opt" "Compiling JIT support in OPcache (unstable)"
+			write_out "opt" "Compiling JIT support in OPcache"
 			HAVE_OPCACHE_JIT="yes"
 			;;
 		i)
@@ -300,6 +300,19 @@ fi
 
 PHP_VERSION_ID=$(php_version_id "$PHP_VERSION")
 write_out "opt" "Selected PHP $PHP_VERSION ($PHP_VERSION_ID)"
+
+if [ $PHP_VERSION_ID -ge 80400 ]; then
+  HAVE_OPCACHE_JIT="yes"
+fi
+if [ "$HAVE_OPCACHE_JIT" == "yes" ]; then
+  if [ $PHP_VERSION_ID -lt 80400 ]; then
+    write_out "WARNING" "JIT in versions below PHP 8.4 is highly unstable and not recommended"
+  else
+    write_out "WARNING" "JIT in PHP 8.4 has not been tested, use it with caution"
+  fi
+else
+  write_out "INFO" "JIT support in OPcache won't be compiled"
+fi
 
 #Needed to use aliases
 shopt -s expand_aliases
@@ -1337,8 +1350,8 @@ if [ "$HAVE_OPCACHE" == "yes" ]; then
 	if [ "$HAVE_OPCACHE_JIT" == "yes" ]; then
 		echo "" >> "$INSTALL_DIR/bin/php.ini"
 		echo "; ---- ! WARNING ! ----" >> "$INSTALL_DIR/bin/php.ini"
-		echo "; JIT can provide big performance improvements, but as of PHP $PHP_VERSION it is still unstable. For this reason, it is disabled by default." >> "$INSTALL_DIR/bin/php.ini"
-		echo "; Enable it at your own risk. See https://www.php.net/manual/en/opcache.configuration.php#ini.opcache.jit for possible options." >> "$INSTALL_DIR/bin/php.ini"
+		echo "; JIT can provide big performance improvements, but it may make your server crash or behave in weird ways. Use it at your own risk." >> "$INSTALL_DIR/bin/php.ini"
+		echo "; See https://www.php.net/manual/en/opcache.configuration.php#ini.opcache.jit for possible options." >> "$INSTALL_DIR/bin/php.ini"
 		echo "opcache.jit=off" >> "$INSTALL_DIR/bin/php.ini"
 		echo "opcache.jit_buffer_size=128M" >> "$INSTALL_DIR/bin/php.ini"
 	fi

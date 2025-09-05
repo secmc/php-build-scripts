@@ -119,7 +119,6 @@ if ($env:PHP_DEBUG_BUILD -eq 1) {
 }
 
 $MSBUILD_CONFIGURATION="RelWithDebInfo"
-$PHP_JIT_ENABLE_ARG="no"
 
 if ($PHP_DEBUG_BUILD -eq 0) {
     $OUT_PATH_REL="Release"
@@ -134,10 +133,6 @@ if ($PHP_DEBUG_BUILD -eq 0) {
     pm-echo "Building debug binaries"
 }
 
-if ($env:PHP_JIT_SUPPORT -eq 1) {
-    $PHP_JIT_ENABLE_ARG="yes"
-    pm-echo "Compiling JIT support in OPcache (unstable)"
-}
 
 function php-version-id {
     param ([string] $version)
@@ -201,6 +196,21 @@ if ($PHP_VERSION_ID -ge 80400) {
 }
 
 pm-echo "Selected PHP $PHP_VER ($PHP_VERSION_ID), SDK target $VC_VER ($SDK_TOOLSET_FLAG), CMake target $CMAKE_TARGET ($CMAKE_TOOLSET_FLAG)"
+
+$PHP_JIT_ENABLE_ARG="no"
+if ($PHP_VERSION_ID -ge 80400 -or $env:PHP_JIT_SUPPORT -eq 1) {
+    $PHP_JIT_ENABLE_ARG="yes"
+}
+
+if ($PHP_JIT_ENABLE_ARG -eq "yes") {
+    if ($PHP_VERSION_ID -lt 80400) {
+        pm-echo "[WARNING] JIT in versions below PHP 8.4 is highly unstable and not recommended"
+    } else {
+        pm-echo "[WARNING] JIT in PHP 8.4 has not been tested, use it with caution"
+    }
+} else {
+    pm-echo "JIT support in OPcache won't be compiled"
+}
 
 if ($env:SOURCES_PATH -ne $null) {
     $SOURCES_PATH=$env:SOURCES_PATH
@@ -617,8 +627,8 @@ append-file-utf8 ";extension=php_arraydebug.dll" $php_ini
 append-file-utf8 "" $php_ini
 if ($PHP_JIT_ENABLE_ARG -eq "yes") {
     append-file-utf8 "; ---- ! WARNING ! ----" $php_ini
-    append-file-utf8 "; JIT can provide big performance improvements, but as of PHP $PHP_VER it is still unstable. For this reason, it is disabled by default." $php_ini
-    append-file-utf8 "; Enable it at your own risk. See https://www.php.net/manual/en/opcache.configuration.php#ini.opcache.jit for possible options." $php_ini
+    append-file-utf8 "; JIT can provide big performance improvements, but it may make your server crash or behave in weird ways. Use it at your own risk." $php_ini
+    append-file-utf8 "; See https://www.php.net/manual/en/opcache.configuration.php#ini.opcache.jit for possible options." $php_ini
     append-file-utf8 "opcache.jit=off" $php_ini
     append-file-utf8 "opcache.jit_buffer_size=128M" $php_ini
     append-file-utf8 "" $php_ini
