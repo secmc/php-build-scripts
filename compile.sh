@@ -392,19 +392,6 @@ if [ "$IS_CROSSCOMPILE" == "yes" ]; then
 		OPENSSL_TARGET="linux-aarch64"
 		export ac_cv_func_fnmatch_works=yes #musl should be OK
 
-		#workarounds for musl 1.2.5, PHP 8.4
-		export php_cv_type_cookie_off64_t=no
-		#we don't need these but these also no longer use off64_t
-		#define them in case someone wants to build an extension which needs them
-		export php_cv_func_pread=yes
-		export php_cv_func_pwrite=yes
-
-		#workarounds for musl 1.2.5, <= PHP 8.3
-		export cookie_io_functions_use_off64_t=no
-		#we don't need these but these also no longer use off64_t
-		#define them in case someone wants to build an extension which needs them
-		export ac_cv_pread=yes
-		export ac_cv_pwrite=yes
 		write_out "INFO" "Cross-compiling for Android ARMv8 (aarch64)"
 	#TODO: add cross-compile for aarch64 platforms (ios, rpi)
 	else
@@ -1188,6 +1175,16 @@ if [ "$IS_CROSSCOMPILE" == "yes" ]; then
 		if [ "$COMPILE_FOR_ANDROID" == "no" ]; then
 			export LIBS="$LIBS -lpthread -ldl -lresolv"
 		else
+			#workarounds for musl 1.2.5
+			if [ "$PHP_VERSION_ID" -lt 80400 ]; then
+				sed -i=".backup" 's/cookie_io_functions_use_off64_t=yes/cookie_io_functions_use_off64_t=no/' ./configure
+				export ac_cv_pread=yes
+				export ac_cv_pwrite=yes
+			else
+				export php_cv_type_cookie_off64_t=no
+				export php_cv_func_pread=yes
+				export php_cv_func_pwrite=yes
+			fi
 			export LIBS="$LIBS -lpthread -lresolv"
 		fi
 	else
