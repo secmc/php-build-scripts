@@ -21,7 +21,7 @@ on:
         type: boolean
 
 env:
-  MUSL_CROSS_MAKE_VERSION: 7b9487e56efc83c419a397af7df7f119001dc51c
+  MUSL_CROSS_MAKE_VERSION: 43fcb1e63786b96add78f89d7454709ae0159fa0
 
 jobs:
   android:
