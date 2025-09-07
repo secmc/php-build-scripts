@@ -50,7 +50,6 @@ jobs:
         with:
           path: ${{ github.workspace }}/compiler
           key: musl-cross-make-${{ env.MUSL_CROSS_MAKE_VERSION }}
-          restore-keys: musl-cross-make-
 
       - name: Checkout musl-cross-make
         if: steps.compiler-cache.outputs.cache-hit != 'true'
