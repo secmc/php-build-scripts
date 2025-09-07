@@ -26,7 +26,7 @@ $PHP_LIBDEFLATE_VER="0.2.1"
 $PHP_XXHASH_VER="0.2.0"
 $PHP_XDEBUG_VER="3.4.5"
 $PHP_ARRAYDEBUG_VER="0.2.0"
-$PHP_ENCODING_VER="0.4.1"
+$PHP_ENCODING_VER="0.5.0"
 
 function pm-echo {
     param ([string] $message)
