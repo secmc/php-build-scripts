@@ -83,6 +83,9 @@ function write-done {
     $script:library = ""
     $script:library_version = ""
 }
+function write-cached {
+    write-status "using cache"
+}
 
 $log_file="$pwd\compile.log"
 echo "" > "$log_file"
@@ -213,19 +216,31 @@ if ($PHP_JIT_ENABLE_ARG -eq "yes") {
 }
 
 if ($env:SOURCES_PATH -ne $null) {
-    $SOURCES_PATH=$env:SOURCES_PATH
+    $BASE_PATH=$env:SOURCES_PATH
 } else {
-    $SOURCES_PATH="C:\pocketmine-php-$PHP_DISPLAY_VER-$($OUT_PATH_REL.ToLower())"
+    $BASE_PATH="C:\pocketmine-php"
 }
-pm-echo "Using path $SOURCES_PATH for build sources"
+$PHP_SDK_PATH="$BASE_PATH\php-sdk-binary-tools-$PHP_SDK_VER"
+$SOURCES_PATH="$BASE_PATH\php-$PHP_DISPLAY_VER-$($OUT_PATH_REL.ToLower())"
+
+pm-echo "Using path $SOURCES_PATH for PHP build sources"
+if (-not (Test-Path "$BASE_PATH")) {
+    mkdir "$BASE_PATH" >> $log_file 2>&1
+}
 
 if (Test-Path "$pwd\bin") {
     pm-echo "Deleting old binary folder..."
     Remove-Item -Recurse -Force "$pwd\bin" 2>&1
 }
 if (Test-Path $SOURCES_PATH) {
-    pm-echo "Deleting old workspace $SOURCES_PATH..."
+    pm-echo "Deleting old PHP build workspace $SOURCES_PATH..."
     Remove-Item -Recurse -Force $SOURCES_PATH 2>&1
+}
+$LIB_BUILD_DIR="$BASE_PATH\deps-build-php-$PHP_VERSION_BASE-$($OUT_PATH_REL.ToLower())"
+
+if (Test-Path "$LIB_BUILD_DIR") {
+    pm-echo "Deleting old deps build workspace $LIB_BUILD_DIR..."
+    Remove-Item -Recurse -Force "$LIB_BUILD_DIR" >> $log_file 2>&1
 }
 
 $download_cache="$pwd\download_cache"
@@ -275,11 +290,15 @@ function append-file-utf8 {
 function download-sdk {
     write-library "PHP SDK" $PHP_SDK_VER
 
-    write-download
-    $file = download-file "https://github.com/php/php-sdk-binary-tools/archive/refs/tags/php-sdk-$PHP_SDK_VER.zip" "php-sdk"
-    write-extracting
-    unzip-file $file $pwd
-    Move-Item "php-sdk-binary-tools-php-sdk-$PHP_SDK_VER" $SOURCES_PATH
+    if (Test-Path "$PHP_SDK_PATH") {
+        write-cached
+    } else {
+        write-download
+        $file = download-file "https://github.com/php/php-sdk-binary-tools/archive/refs/tags/php-sdk-$PHP_SDK_VER.zip" "php-sdk"
+        write-extracting
+        unzip-file $file $pwd
+        Move-Item "php-sdk-binary-tools-php-sdk-$PHP_SDK_VER" $PHP_SDK_PATH
+    }
     write-done
 }
 
@@ -288,7 +307,7 @@ function sdk-command {
 
     New-Item task.bat -Value $command >> $log_file 2>&1
     echo "Running SDK command: $command" >> $log_file
-    $wrap = "`"$SOURCES_PATH\phpsdk-starter.bat`" -c $VC_VER -a $ARCH $SDK_TOOLSET_FLAG -t task.bat 2>&1"
+    $wrap = "`"$PHP_SDK_PATH\phpsdk-starter.bat`" -c $VC_VER -a $ARCH $SDK_TOOLSET_FLAG -t task.bat 2>&1"
     echo "SDK wrapper command: $wrap" >> $log_file
     (& cmd.exe /c $wrap) >> $log_file
     $result=$LASTEXITCODE
@@ -305,7 +324,7 @@ function sdk-command {
 function download-php-deps {
     write-library "PHP prebuilt deps" "$PHP_VERSION_BASE/$VC_VER"
     write-download
-    sdk-command "phpsdk_deps -u -t $VC_VER -b $PHP_VERSION_BASE -a $ARCH -f -d $DEPS_DIR || exit 1"
+    sdk-command "phpsdk_deps -u -t $VC_VER -b $PHP_VERSION_BASE -a $ARCH -d $DEPS_DIR || exit 1"
     write-done
 }
 
@@ -419,7 +438,7 @@ function download-php {
     $file = download-file "https://github.com/php/php-src/archive/$PHP_GIT_REV.zip" "php"
     write-extracting
     unzip-file $file $pwd
-    Move-Item "php-src-$PHP_GIT_REV" php-src >> $log_file 2>&1
+    Move-Item "php-src-$PHP_GIT_REV" $SOURCES_PATH >> $log_file 2>&1
     write-done
 }
 
@@ -440,7 +459,7 @@ function get-github-extension {
 }
 
 function download-php-extensions {
-    Push-Location "$SOURCES_PATH\php-src\ext" >> $log_file 2>&1
+    Push-Location "$SOURCES_PATH\ext" >> $log_file 2>&1
     get-github-extension "pmmpthread" $PHP_PMMPTHREAD_VER "pmmp" "ext-pmmpthread"
     get-github-extension "yaml"                  $PHP_YAML_VER                  "php"      "pecl-file_formats-yaml"
     get-github-extension "chunkutils2"           $PHP_CHUNKUTILS2_VER           "pmmp"     "ext-chunkutils2"
@@ -468,21 +487,17 @@ function download-php-extensions {
 }
 
 download-sdk
-cd $SOURCES_PATH >> $log_file 2>&1
 
 pm-echo "Checking that SDK can find Visual Studio"
 #using CMAKE_TARGET for this is a bit meh but it's human readable at least
 sdk-command "exit /b 0" "Please install $CMAKE_TARGET"
 
-$DEPS_DIR="$SOURCES_PATH\deps"
+$DEPS_DIR="$BASE_PATH\deps-php-$PHP_VERSION_BASE-$($OUT_PATH_REL.ToLower())"
 #custom libs depend on some standard libs, so prepare these first
 #a bit annoying because this part of the build is slow and makes it take longer to find problems
 download-php-deps
 
-$LIB_BUILD_DIR="$SOURCES_PATH\deps_build"
-
 mkdir $LIB_BUILD_DIR >> $log_file 2>&1
-
 cd $LIB_BUILD_DIR >> $log_file 2>&1
 
 build-pthreads4w
@@ -491,12 +506,12 @@ build-yaml
 build-leveldb
 build-libdeflate
 
-cd $SOURCES_PATH >> $log_file 2>&1
+cd $BASE_PATH >> $log_file 2>&1
 
 download-php
 download-php-extensions
 
-cd "$SOURCES_PATH\php-src"
+cd "$SOURCES_PATH"
 write-library "PHP" $PHP_VER
 write-configure
 
@@ -504,6 +519,7 @@ sdk-command "buildconf.bat"
 sdk-command "configure^`
     --with-mp=auto^`
     --with-prefix=pocketmine-php-bin^`
+    --with-php-build=`"$DEPS_DIR`"^`
     --$PHP_HAVE_DEBUG^`
     --disable-all^`
     --disable-cgi^`
@@ -569,17 +585,17 @@ write-install
 sdk-command "nmake snap"
 
 #remove ICU DLLs copied unnecessarily by nmake snap - this needs to be removed if we ever have ext/intl as a dependency
-Remove-Item "$SOURCES_PATH\php-src\$ARCH\$($OUT_PATH_REL)_TS\php-$PHP_DISPLAY_VER\icu*.dll" >> $log_file 2>&1
+Remove-Item "$SOURCES_PATH\$ARCH\$($OUT_PATH_REL)_TS\php-$PHP_DISPLAY_VER\icu*.dll" >> $log_file 2>&1
 #remove enchant dependencies which are unnecessarily copied - this needs to be removed if we ever have ext/enchant as a dependency
-Remove-Item "$SOURCES_PATH\php-src\$ARCH\$($OUT_PATH_REL)_TS\php-$PHP_DISPLAY_VER\glib-*.dll" >> $log_file 2>&1
-Remove-Item "$SOURCES_PATH\php-src\$ARCH\$($OUT_PATH_REL)_TS\php-$PHP_DISPLAY_VER\gmodule-*.dll" >> $log_file 2>&1
-Remove-Item -Recurse "$SOURCES_PATH\php-src\$ARCH\$($OUT_PATH_REL)_TS\php-$PHP_DISPLAY_VER\lib\enchant\" >> $log_file 2>&1
+Remove-Item "$SOURCES_PATH\$ARCH\$($OUT_PATH_REL)_TS\php-$PHP_DISPLAY_VER\glib-*.dll" >> $log_file 2>&1
+Remove-Item "$SOURCES_PATH\$ARCH\$($OUT_PATH_REL)_TS\php-$PHP_DISPLAY_VER\gmodule-*.dll" >> $log_file 2>&1
+Remove-Item -Recurse "$SOURCES_PATH\$ARCH\$($OUT_PATH_REL)_TS\php-$PHP_DISPLAY_VER\lib\enchant\" >> $log_file 2>&1
 
 cd $outpath >> $log_file 2>&1
-Move-Item -Force "$SOURCES_PATH\php-src\$ARCH\$($OUT_PATH_REL)_TS\php-debug-pack-*.zip" $outpath
+Move-Item -Force "$SOURCES_PATH\$ARCH\$($OUT_PATH_REL)_TS\php-debug-pack-*.zip" $outpath
 Remove-Item -Recurse bin -ErrorAction Continue >> $log_file 2>&1
 mkdir bin >> $log_file 2>&1
-Move-Item "$SOURCES_PATH\php-src\$ARCH\$($OUT_PATH_REL)_TS\php-$PHP_DISPLAY_VER" bin\php
+Move-Item "$SOURCES_PATH\$ARCH\$($OUT_PATH_REL)_TS\php-$PHP_DISPLAY_VER" bin\php
 
 $php_exe = "$outpath\bin\php\php.exe"
 
