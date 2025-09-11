@@ -26,7 +26,7 @@ $PHP_LIBDEFLATE_VER="0.2.1"
 $PHP_XXHASH_VER="0.2.0"
 $PHP_XDEBUG_VER="3.4.5"
 $PHP_ARRAYDEBUG_VER="0.2.0"
-$PHP_ENCODING_VER="0.5.1"
+$PHP_ENCODING_VER="1.0.0"
 
 function pm-echo {
     param ([string] $message)
@@ -621,6 +621,7 @@ append-file-utf8 "extension=php_igbinary.dll" $php_ini
 append-file-utf8 "extension=php_leveldb.dll" $php_ini
 append-file-utf8 "extension=php_crypto.dll" $php_ini
 append-file-utf8 "extension=php_libdeflate.dll" $php_ini
+append-file-utf8 "extension=php_encoding.dll" $php_ini
 append-file-utf8 "igbinary.compact_strings=0" $php_ini
 append-file-utf8 "zend_extension=php_opcache.dll" $php_ini
 append-file-utf8 "opcache.enable=1" $php_ini
@@ -658,8 +659,6 @@ append-file-utf8 ";The following overrides allow profiler, gc stats and traces t
 append-file-utf8 "xdebug.profiler_output_name=cachegrind.%s.%p.%r" $php_ini
 append-file-utf8 "xdebug.gc_stats_output_name=gcstats.%s.%p.%r" $php_ini
 append-file-utf8 "xdebug.trace_output_name=trace.%s.%p.%r" $php_ini
-append-file-utf8 ";Optional experimental extensions" $php_ini
-append-file-utf8 "extension=php_encoding.dll" $php_ini
 write-done
 pm-echo "Xdebug is included, but disabled by default. To enable it, change 'xdebug.mode' in your php.ini file."
 
