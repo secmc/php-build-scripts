@@ -347,7 +347,7 @@ jobs:
           removeArtifacts: true
           bodyFile: ${{ github.workspace }}/changelog.md
           makeLatest: ${{ inputs.special-release == 'default-latest' }}
-          prerelease: ${{ inputs.pm-preview == 'true' }}
+          prerelease: ${{ inputs.pm-preview == true }}
 
       - name: Update php-version PM release
         uses: ncipollo/release-action@v1.20.0
@@ -363,5 +363,5 @@ jobs:
           removeArtifacts: true
           bodyFile: ${{ github.workspace }}/changelog.md
           makeLatest: false
-          prerelease: ${{ inputs.pm-preview == 'true' }}
+          prerelease: ${{ inputs.pm-preview == true }}
 
