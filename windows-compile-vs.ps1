@@ -389,8 +389,8 @@ function build-grpc {
     write-install
     sdk-command "cmake -P cmake_install.cmake || exit 1"
 
-    Move-Item "third_party\protobuf\php\ext\google\protobuf" "$SOURCES_PATH\php-src\ext\protobuf" >> $log_file 2>&1
-    Move-Item "third_party\protobuf\third_party" "$SOURCES_PATH\php-src\ext\protobuf\third_party" >> $log_file 2>&1
+    Move-Item "third_party\protobuf\php\ext\google\protobuf" "$SOURCES_PATH\ext\protobuf" >> $log_file 2>&1
+    Move-Item "third_party\protobuf\third_party" "$SOURCES_PATH\ext\protobuf\third_party" >> $log_file 2>&1
 
 @"
 ARG_ENABLE("protobuf", "Enable Protobuf extension", "yes");
@@ -402,7 +402,7 @@ if (PHP_PROTOBUF != "no") {
 
   AC_DEFINE('HAVE_PROTOBUF', 1, '');
 }
-"@ | Out-File -Encoding ascii -FilePath $SOURCES_PATH\php-src\ext\protobuf\config.w32
+"@ | Out-File -Encoding ascii -FilePath $SOURCES_PATH\ext\protobuf\config.w32
 
     write-done
     Pop-Location
