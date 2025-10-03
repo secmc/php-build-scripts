@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-PHP_VERSIONS=("8.1.33" "8.2.29" "8.3.25" "8.4.12" "8.5.0beta3")
+PHP_VERSIONS=("8.1.33" "8.2.29" "8.3.25" "8.4.13" "8.5.0beta3")
 
 #### NOTE: Tags with "v" prefixes behave weirdly in the GitHub API. They'll be stripped in some places but not others.
 #### Use commit hashes to avoid this.
