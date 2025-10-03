@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-PHP_VERSIONS=("8.1.33" "8.2.29" "8.3.25" "8.4.12")
+PHP_VERSIONS=("8.1.33" "8.2.29" "8.3.25" "8.4.12" "8.5.0beta3")
 
 #### NOTE: Tags with "v" prefixes behave weirdly in the GitHub API. They'll be stripped in some places but not others.
 #### Use commit hashes to avoid this.
@@ -45,6 +45,10 @@ EXT_RDKAFKA_VERSION="6.0.3"
 EXT_ZSTD_VERSION="0.15.2"
 EXT_GRPC_VERSION="1.57.3"
 EXT_VANILLAGENERATOR_VERSION="abd059fd2ca79888aab3b9c5070d83ceea55fada"
+
+EXT_PMMPTHREAD_VERSION_PHP85="4aa34a27feaa43adba5f1e93939828d1d7afdefc"
+EXT_XDEBUG_VERSION_PHP85="86727b0b05b5d0a9c4fb85021f05d7931e2c3a35"
+EXT_IGBINARY_VERSION_PHP85="8f8b7175c7859f1845bcdee6f7d0baeea7d07cb8"
 
 function write_out {
 	echo "[$1] $2"
@@ -315,6 +319,11 @@ fi
 PHP_VERSION_ID=$(php_version_id "$PHP_VERSION")
 write_out "opt" "Selected PHP $PHP_VERSION ($PHP_VERSION_ID)"
 
+if [ $PHP_VERSION_ID -ge 80500 ]; then
+  EXT_PMMPTHREAD_VERSION="$EXT_PMMPTHREAD_VERSION_PHP85"
+  EXT_XDEBUG_VERSION="$EXT_XDEBUG_VERSION_PHP85"
+  EXT_IGBINARY_VERSION="$EXT_IGBINARY_VERSION_PHP85"
+fi
 if [ $PHP_VERSION_ID -ge 80400 ]; then
   HAVE_OPCACHE_JIT="yes"
 fi
@@ -1774,7 +1783,9 @@ echo "recursionguard.enabled=0 ;disabled due to minor performance impact, only e
 echo "extension_dir=./$INSTALL_DIR/lib/php/extensions/no-debug-zts-20230831" >> "$INSTALL_DIR/bin/php.ini"
 
 if [ "$HAVE_OPCACHE" == "yes" ]; then
-	echo "zend_extension=opcache.so" >> "$INSTALL_DIR/bin/php.ini"
+	if [ "$PHP_VERSION_ID" -lt 80500 ]; then
+		echo "zend_extension=opcache.so" >> "$INSTALL_DIR/bin/php.ini"
+	fi
 	echo "opcache.enable=1" >> "$INSTALL_DIR/bin/php.ini"
 	echo "opcache.enable_cli=1" >> "$INSTALL_DIR/bin/php.ini"
 	echo "opcache.save_comments=1" >> "$INSTALL_DIR/bin/php.ini"
