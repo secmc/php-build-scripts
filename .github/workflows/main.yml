@@ -7,6 +7,12 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  actions: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
